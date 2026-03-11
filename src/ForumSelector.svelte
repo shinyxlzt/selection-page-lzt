@@ -1,5 +1,5 @@
 <script>
-import { slide } from "svelte/transition";
+    import { slide } from "svelte/transition";
     import {
         Search,
         ArrowLeft,
@@ -21,7 +21,7 @@ import { slide } from "svelte/transition";
 
     function parseForumData(data) {
         if (!data || !data.data) return [];
-        
+
         let allNodes = [];
         if (Array.isArray(data.data)) {
             data.data.forEach((group) => {
@@ -65,7 +65,7 @@ import { slide } from "svelte/transition";
     let expandedForumId = null;
 
     $: isDesktop = innerWidth >= 768;
-    
+
     $: activeGroup =
         forums.find((f) => f.forum_id === activeGroupId) ||
         (forums.length > 0 ? forums[0] : null);
@@ -103,7 +103,6 @@ import { slide } from "svelte/transition";
 
     $: searchResults = searchForums(forums, searchQuery);
     $: isSearching = searchQuery.trim().length > 0;
-
 
     function handleSelect(forum) {
         selectedForum =
@@ -172,13 +171,13 @@ import { slide } from "svelte/transition";
         <div class="top-bar">
             <div class="container">
                 <div class="header-row">
-                    <button class="back-btn">
-                        <ArrowLeft size={16} />
-                    </button>
                     <div class="title-area">
                         <h1>Выбор раздела</h1>
                         <p>Выберите раздел для создания новой темы</p>
                     </div>
+                    <button class="back-btn">
+                        <X size={16} />
+                    </button>
                 </div>
 
                 <div class="search-box">
@@ -308,9 +307,7 @@ import { slide } from "svelte/transition";
                     <div class="main-content">
                         {#if activeGroup}
                             <div class="main-header">
-                                <h2
-                                    style={`color: ${CATEGORY_COLOR}`}
-                                >
+                                <h2 style={`color: ${CATEGORY_COLOR}`}>
                                     {activeGroup.forum_title}
                                 </h2>
                             </div>
