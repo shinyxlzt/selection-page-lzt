@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background-color: #0f0f17;
+}
+
+@font-face {
+  font-family: 'lztIcons';
+  src: url('./font.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.NodeSvgIcon {
+  position: relative;
+  font-family: 'lztIcons';
+  font-size: 17px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  line-height: 20px;
+  color: currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+::selection {
+  background: rgba(245, 166, 35, 0.25);
+  color: #f5a623;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
