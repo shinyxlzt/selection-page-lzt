@@ -105,12 +105,18 @@
     $: isSearching = searchQuery.trim().length > 0;
 
     function handleSelect(forum) {
+        if (forum.permissions?.create_thread === false) return;
         selectedForum =
             selectedForum?.forum_id === forum.forum_id ? null : forum;
     }
 
     function handleConfirm() {
-        if (selectedForum) confirmed = true;
+        if (selectedForum) {
+            confirmed = true;
+            setTimeout(() => {
+                window.location.href = `https://lolz.live/forums/${selectedForum.forum_id}/create-thread`;
+            }, 800);
+        }
     }
 
     function handleBack() {
@@ -155,13 +161,9 @@
                     </p>
                 {/if}
             </div>
-            <div class="actions">
-                <button on:click={handleBack} class="btn-secondary"
-                    >Изменить раздел</button
-                >
-                <button on:click={() => (confirmed = false)} class="btn-primary"
-                    >Продолжить создание темы</button
-                >
+            <div class="redirect-status">
+                <Loader2 size={24} class="spin" color="#2BAD72" />
+                <span>Перенаправление...</span>
             </div>
         </div>
     </div>
@@ -430,48 +432,20 @@
         font-size: 14px;
     }
 
-    .actions {
+    .redirect-status {
         display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 24px;
+        align-items: center;
         justify-content: center;
-    }
-
-    @media (min-width: 640px) {
-        .actions {
-            flex-direction: row;
-        }
-    }
-
-    .btn-secondary {
-        padding: 10px 24px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: rgba(255, 255, 255, 0.6);
-        background: transparent;
+        gap: 12px;
+        margin-top: 32px;
+        color: rgba(255, 255, 255, 0.5);
         font-size: 14px;
-        transition: all 0.2s;
+        animation: fadeIn 0.5s ease-out;
     }
 
-    .btn-secondary:hover {
-        color: white;
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .btn-primary {
-        padding: 10px 24px;
-        border-radius: 12px;
-        background: #2bad72;
-        color: #000;
-        font-size: 14px;
-        font-weight: 500;
-        border: none;
-        transition: all 0.2s;
-    }
-
-    .btn-primary:hover {
-        background: rgba(43, 173, 114, 0.9);
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .main-screen {

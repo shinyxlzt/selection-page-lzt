@@ -46,7 +46,9 @@
     $: childSelected = hasChildren && isChildSelectedFunc(forum.forums);
 
     function handleClick() {
-        onSelect(forum);
+        if (forum.permissions?.create_thread !== false) {
+            onSelect(forum);
+        }
         if (hasChildren) onToggle(forum.forum_id);
     }
 
@@ -64,6 +66,7 @@
             : childSelected
               ? 'child-selected'
               : 'default'}"
+        class:unselectable={forum.permissions?.create_thread === false}
         style="padding-left: {12 + depth * 18}px;"
         on:click={handleClick}
         on:keydown={(e) => {
@@ -155,6 +158,14 @@
 </div>
 
 <style>
+    .forum-item.unselectable:not(.child-selected):not(.selected) {
+        cursor: default;
+    }
+
+    .forum-item.unselectable:not(.selected) .radio-box {
+        opacity: 0.15;
+    }
+
     .forum-item-container {
         margin-bottom: 2px;
     }

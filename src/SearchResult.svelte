@@ -31,6 +31,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
     class="search-result {selected ? 'selected' : ''}"
+    class:unselectable={forum.permissions?.create_thread === false}
     on:click={onClick}
     tabindex="0"
     role="button"
@@ -68,6 +69,12 @@
 </div>
 
 <style>
+    .search-result.unselectable {
+        cursor: default;
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
     .search-result {
         display: flex;
         align-items: center;
