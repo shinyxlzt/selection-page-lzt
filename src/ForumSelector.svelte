@@ -3,7 +3,6 @@
     import {
         Search,
         ArrowLeft,
-        Check,
         X,
         Loader2,
         List,
@@ -59,7 +58,6 @@
 
     let selectedForum = null;
     let searchQuery = "";
-    let confirmed = false;
     let isSidebarOpen = false;
     let innerWidth = 0;
     let expandedForumId = null;
@@ -112,15 +110,8 @@
 
     function handleConfirm() {
         if (selectedForum) {
-            confirmed = true;
-            setTimeout(() => {
-                window.location.href = `https://lolz.live/forums/${selectedForum.forum_id}/create-thread`;
-            }, 800);
+            window.location.href = `https://lolz.live/forums/${selectedForum.forum_id}/create-thread`;
         }
-    }
-
-    function handleBack() {
-        confirmed = false;
     }
 
     function clearSearch() {
@@ -144,223 +135,192 @@
 
 <svelte:window bind:innerWidth />
 
-{#if confirmed && selectedForum}
-    <div class="success-screen">
-        <div class="success-card">
-            <div class="check-circle">
-                <Check size={36} color="#2BAD72" />
-            </div>
-            <div class="success-info">
-                <h2 class="success-title">Раздел выбран</h2>
-                <div class="selected-forum-title">
-                    {selectedForum.forum_title}
+<div class="main-screen">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="header-row">
+                <div class="title-area">
+                    <h1>Выбор раздела</h1>
+                    <p>Выберите раздел для создания новой темы</p>
                 </div>
-                {#if selectedForum.forum_description}
-                    <p class="selected-forum-desc">
-                        {selectedForum.forum_description}
-                    </p>
-                {/if}
+                <button class="back-btn">
+                    <X size={16} />
+                </button>
             </div>
-            <div class="redirect-status">
-                <Loader2 size={24} class="spin" color="#2BAD72" />
-                <span>Перенаправление...</span>
+
+            <div class="search-box">
+                <div class="search-icon-left">
+                    <Search size={15} />
+                </div>
+                <input
+                    bind:value={searchQuery}
+                    placeholder="Поиск раздела..."
+                />
+                {#if searchQuery}
+                    <button class="clear-btn" on:click={clearSearch}>
+                        <X size={14} />
+                    </button>
+                {/if}
             </div>
         </div>
     </div>
-{:else}
-    <div class="main-screen">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div class="container">
-                <div class="header-row">
-                    <div class="title-area">
-                        <h1>Выбор раздела</h1>
-                        <p>Выберите раздел для создания новой темы</p>
-                    </div>
-                    <button class="back-btn">
-                        <X size={16} />
-                    </button>
+
+    <!-- Content -->
+    <div class="content-wrapper">
+        {#if loading}
+            <div class="loading-state">
+                <Loader2 size={24} class="spin" />
+                <span>Загрузка разделов...</span>
+            </div>
+        {/if}
+
+        {#if !loading && isSearching}
+            <div class="search-results-section">
+                <div class="results-header">
+                    <Search size={13} color="rgba(255,255,255,0.3)" />
+                    <span>Найдено: {searchResults.length}</span>
                 </div>
 
-                <div class="search-box">
-                    <div class="search-icon-left">
-                        <Search size={15} />
+                {#if searchResults.length === 0}
+                    <div class="no-results">
+                        <Search size={32} class="empty-icon" />
+                        <p class="empty-text">Ничего не найдено</p>
+                        <p class="empty-subtext">Попробуйте другой запрос</p>
                     </div>
-                    <input
-                        bind:value={searchQuery}
-                        placeholder="Поиск раздела..."
-                    />
-                    {#if searchQuery}
-                        <button class="clear-btn" on:click={clearSearch}>
-                            <X size={14} />
-                        </button>
+                {:else}
+                    <div class="results-list">
+                        {#each searchResults as forum (forum.forum_id)}
+                            <SearchResult
+                                {forum}
+                                selected={selectedForum?.forum_id ===
+                                    forum.forum_id}
+                                onClick={() => handleSelect(forum)}
+                                query={searchQuery}
+                            />
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+        {/if}
+
+        {#if !loading && !isSearching}
+            <div class="split-layout">
+                <div class="sidebar" class:open={isSidebarOpen}>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <div class="sidebar-header" on:click={toggleSidebar}>
+                        <div class="sidebar-header-title">
+                            <List size={13} color="#2BAD72" />
+                            <span>Категории</span>
+                        </div>
+                        {#if !isDesktop}
+                            <div
+                                class="sidebar-toggle"
+                                style="transform: {isSidebarOpen
+                                    ? 'rotate(180deg)'
+                                    : 'rotate(0deg)'}"
+                            >
+                                <ChevronDown size={14} />
+                            </div>
+                        {/if}
+                    </div>
+                    {#if isSidebarOpen || isDesktop}
+                        <div
+                            class="sidebar-menu"
+                            transition:slide|local={{ duration: 200 }}
+                        >
+                            {#each forums as group (group.forum_id)}
+                                <button
+                                    class="sidebar-item"
+                                    class:active={activeGroup?.forum_id ===
+                                        group.forum_id}
+                                    on:click={() =>
+                                        (activeGroupId = group.forum_id)}
+                                >
+                                    <div
+                                        class="sidebar-icon"
+                                        style={`color: ${CATEGORY_COLOR}`}
+                                    >
+                                        {#if group.forum_title === "Основная категория"}
+                                            <TrendingUp size={14} />
+                                        {:else if group.forum_title === "Тематическая категория"}
+                                            <BookOpenText size={14} />
+                                        {:else if group.forum_title === "Игровая категория"}
+                                            <Gamepad2 size={14} />
+                                        {:else if group.forum_title === "Общая категория"}
+                                            <MessageSquarePlus size={14} />
+                                        {:else if group.forum_title === "Пользовательские разделы"}
+                                            <Users size={14} />
+                                        {:else if group.icon_content}
+                                            <span
+                                                class="NodeSvgIcon"
+                                                style="font-size: 14px; width: 14px; height: 14px;"
+                                                >{@html group.icon_content}</span
+                                            >
+                                        {:else}
+                                            <Hash size={14} />
+                                        {/if}
+                                    </div>
+                                    <span class="sidebar-title"
+                                        >{group.forum_title}</span
+                                    >
+                                </button>
+                            {/each}
+                        </div>
                     {/if}
                 </div>
-            </div>
-        </div>
 
-        <!-- Content -->
-        <div class="content-wrapper">
-            {#if loading}
-                <div class="loading-state">
-                    <Loader2 size={24} class="spin" />
-                    <span>Загрузка разделов...</span>
-                </div>
-            {/if}
-
-            {#if !loading && isSearching}
-                <div class="search-results-section">
-                    <div class="results-header">
-                        <Search size={13} color="rgba(255,255,255,0.3)" />
-                        <span>Найдено: {searchResults.length}</span>
-                    </div>
-
-                    {#if searchResults.length === 0}
-                        <div class="no-results">
-                            <Search size={32} class="empty-icon" />
-                            <p class="empty-text">Ничего не найдено</p>
-                            <p class="empty-subtext">
-                                Попробуйте другой запрос
-                            </p>
+                <div class="main-content">
+                    {#if activeGroup}
+                        <div class="main-header">
+                            <h2 style={`color: ${CATEGORY_COLOR}`}>
+                                {activeGroup.forum_title}
+                            </h2>
                         </div>
-                    {:else}
-                        <div class="results-list">
-                            {#each searchResults as forum (forum.forum_id)}
-                                <SearchResult
+                        <div class="forums-list-main fade-up-group">
+                            {#each activeGroup.forums as forum, index (forum.forum_id)}
+                                <ForumItemSelectable
                                     {forum}
-                                    selected={selectedForum?.forum_id ===
+                                    selectedId={selectedForum?.forum_id ?? null}
+                                    onSelect={handleSelect}
+                                    depth={0}
+                                    accentColor={CATEGORY_COLOR}
+                                    expanded={expandedForumId ===
                                         forum.forum_id}
-                                    onClick={() => handleSelect(forum)}
-                                    query={searchQuery}
+                                    onToggle={handleToggleTop}
+                                    isLastItem={index ===
+                                        activeGroup.forums.length - 1}
+                                    ancestorsLast={[]}
                                 />
                             {/each}
                         </div>
                     {/if}
                 </div>
-            {/if}
-
-            {#if !loading && !isSearching}
-                <div class="split-layout">
-                    <div class="sidebar" class:open={isSidebarOpen}>
-                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <!-- svelte-ignore a11y-no-static-element-interactions -->
-                        <div class="sidebar-header" on:click={toggleSidebar}>
-                            <div class="sidebar-header-title">
-                                <List size={13} color="#2BAD72" />
-                                <span>Категории</span>
-                            </div>
-                            {#if !isDesktop}
-                                <div
-                                    class="sidebar-toggle"
-                                    style="transform: {isSidebarOpen
-                                        ? 'rotate(180deg)'
-                                        : 'rotate(0deg)'}"
-                                >
-                                    <ChevronDown size={14} />
-                                </div>
-                            {/if}
-                        </div>
-                        {#if isSidebarOpen || isDesktop}
-                            <div
-                                class="sidebar-menu"
-                                transition:slide|local={{ duration: 200 }}
-                            >
-                                {#each forums as group (group.forum_id)}
-                                    <button
-                                        class="sidebar-item"
-                                        class:active={activeGroup?.forum_id ===
-                                            group.forum_id}
-                                        on:click={() =>
-                                            (activeGroupId = group.forum_id)}
-                                    >
-                                        <div
-                                            class="sidebar-icon"
-                                            style={`color: ${CATEGORY_COLOR}`}
-                                        >
-                                            {#if group.forum_title === "Основная категория"}
-                                                <TrendingUp size={14} />
-                                            {:else if group.forum_title === "Тематическая категория"}
-                                                <BookOpenText size={14} />
-                                            {:else if group.forum_title === "Игровая категория"}
-                                                <Gamepad2 size={14} />
-                                            {:else if group.forum_title === "Общая категория"}
-                                                <MessageSquarePlus size={14} />
-                                            {:else if group.forum_title === "Пользовательские разделы"}
-                                                <Users size={14} />
-                                            {:else if group.icon_content}
-                                                <span
-                                                    class="NodeSvgIcon"
-                                                    style="font-size: 14px; width: 14px; height: 14px;"
-                                                    >{@html group.icon_content}</span
-                                                >
-                                            {:else}
-                                                <Hash size={14} />
-                                            {/if}
-                                        </div>
-                                        <span class="sidebar-title"
-                                            >{group.forum_title}</span
-                                        >
-                                    </button>
-                                {/each}
-                            </div>
-                        {/if}
-                    </div>
-
-                    <div class="main-content">
-                        {#if activeGroup}
-                            <div class="main-header">
-                                <h2 style={`color: ${CATEGORY_COLOR}`}>
-                                    {activeGroup.forum_title}
-                                </h2>
-                            </div>
-                            <div class="forums-list-main fade-up-group">
-                                {#each activeGroup.forums as forum, index (forum.forum_id)}
-                                    <ForumItemSelectable
-                                        {forum}
-                                        selectedId={selectedForum?.forum_id ??
-                                            null}
-                                        onSelect={handleSelect}
-                                        depth={0}
-                                        accentColor={CATEGORY_COLOR}
-                                        expanded={expandedForumId ===
-                                            forum.forum_id}
-                                        onToggle={handleToggleTop}
-                                        isLastItem={index ===
-                                            activeGroup.forums.length - 1}
-                                        ancestorsLast={[]}
-                                    />
-                                {/each}
-                            </div>
-                        {/if}
-                    </div>
-                </div>
-            {/if}
-        </div>
-
-        <!-- Bottom action bar -->
-        {#if selectedForum}
-            <div class="bottom-bar" transition:slide|local={{ duration: 300 }}>
-                <div class="bottom-bar-content">
-                    <div class="bottom-info">
-                        <p class="label">Выбранный раздел:</p>
-                        <div class="selected-row">
-                            <span class="selected-title-sm"
-                                >{selectedForum.forum_title}</span
-                            >
-                        </div>
-                    </div>
-                    <button class="confirm-btn" on:click={handleConfirm}>
-                        Продолжить
-                        <ArrowLeft
-                            size={16}
-                            style="transform: rotate(180deg);"
-                        />
-                    </button>
-                </div>
             </div>
         {/if}
     </div>
-{/if}
+
+    <!-- Bottom action bar -->
+    {#if selectedForum}
+        <div class="bottom-bar" transition:slide|local={{ duration: 300 }}>
+            <div class="bottom-bar-content">
+                <div class="bottom-info">
+                    <p class="label">Выбранный раздел:</p>
+                    <div class="selected-row">
+                        <span class="selected-title-sm"
+                            >{selectedForum.forum_title}</span
+                        >
+                    </div>
+                </div>
+                <button class="confirm-btn" on:click={handleConfirm}>
+                    Создать тему
+                    <ArrowLeft size={16} style="transform: rotate(180deg);" />
+                </button>
+            </div>
+        </div>
+    {/if}
+</div>
 
 <style>
     .fade-up-group {
@@ -385,67 +345,6 @@
     :global(.spin) {
         animation: spin 1s linear infinite;
         margin-right: 8px;
-    }
-
-    .success-screen {
-        min-height: 100vh;
-        background: #080808;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-    }
-
-    .success-card {
-        max-width: 28rem;
-        width: 100%;
-        text-align: center;
-    }
-
-    .check-circle {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: rgba(43, 173, 114, 0.2);
-        border: 2px solid rgba(43, 173, 114, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 24px auto;
-    }
-
-    .success-title {
-        color: rgba(255, 255, 255, 0.9);
-        margin: 0 0 8px 0;
-        font-size: 24px;
-        font-weight: 500;
-    }
-
-    .selected-forum-title {
-        color: #2bad72;
-        font-size: 20px;
-        margin-bottom: 4px;
-    }
-
-    .selected-forum-desc {
-        color: rgba(255, 255, 255, 0.4);
-        font-size: 14px;
-    }
-
-    .redirect-status {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        margin-top: 32px;
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 14px;
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
     }
 
     .main-screen {
