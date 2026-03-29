@@ -1,56 +1,17 @@
 <script>
     import { slide } from "svelte/transition";
-    import {
-        Search,
-        ArrowLeft,
-        X,
-        Loader2,
-        List,
-        TrendingUp,
-        Hash,
-        MessageSquarePlus,
-        ChevronDown,
-        BookOpenText,
-        Users,
-        Gamepad2,
-    } from "lucide-svelte";
+    import { Search, Loader2, ArrowLeft } from "lucide-svelte";
     import forumDataRaw from "./data.json";
     import ForumItemSelectable from "./ForumItemSelectable.svelte";
     import SearchResult from "./SearchResult.svelte";
-
-    function parseForumData(data) {
-        if (!data || !data.data) return [];
-
-        let allNodes = [];
-        if (Array.isArray(data.data)) {
-            data.data.forEach((group) => {
-                if (Array.isArray(group)) allNodes.push(...group);
-                else allNodes.push(group);
-            });
-        }
-
-        let nodeMap = {};
-        let parsedForums = [];
-
-        allNodes.forEach((node) => {
-            if (typeof node === "object" && node !== null) {
-                node.forums = [];
-                nodeMap[node.forum_id] = node;
-            }
-        });
-
-        allNodes.forEach((node) => {
-            if (typeof node === "object" && node !== null) {
-                if (node.parent_node_id && nodeMap[node.parent_node_id]) {
-                    nodeMap[node.parent_node_id].forums.push(node);
-                } else {
-                    parsedForums.push(node);
-                }
-            }
-        });
-
-        return parsedForums;
-    }
+    import TopBar from "./components/TopBar.svelte";
+    import Sidebar from "./components/Sidebar.svelte";
+    import { parseForumData, searchForums } from "./lib/forum.js";
+    import {
+        CATEGORY_COLOR,
+        FORUM_BASE_URL,
+        TRANSITIONS,
+    } from "./lib/constants.js";
 
     let forums = parseForumData(forumDataRaw);
     let loading = false;
@@ -68,37 +29,6 @@
         forums.find((f) => f.forum_id === activeGroupId) ||
         (forums.length > 0 ? forums[0] : null);
 
-    const CATEGORY_COLOR = "#2BAD72";
-
-    function searchForums(groups, query) {
-        const q = query.toLowerCase().trim();
-        if (!q) return [];
-        const all = flattenForums(groups);
-        return all.filter(
-            (f) =>
-                f.forum_title.toLowerCase().includes(q) ||
-                f.forum_description?.toLowerCase().includes(q),
-        );
-    }
-
-    function flattenForums(groups) {
-        const result = [];
-        function traverse(forums, depth = 0, parentTitle = null) {
-            for (const forum of forums) {
-                result.push({ ...forum, depth, parent_title: parentTitle });
-                if (forum.forums && forum.forums.length > 0) {
-                    traverse(forum.forums, depth + 1, forum.forum_title);
-                }
-            }
-        }
-        for (const group of groups) {
-            if (group.forums) {
-                traverse(group.forums, 0, group.forum_title);
-            }
-        }
-        return result;
-    }
-
     $: searchResults = searchForums(forums, searchQuery);
     $: isSearching = searchQuery.trim().length > 0;
 
@@ -110,17 +40,7 @@
 
     function handleConfirm() {
         if (selectedForum) {
-            window.location.href = `https://lolz.live/forums/${selectedForum.forum_id}/create-thread`;
-        }
-    }
-
-    function clearSearch() {
-        searchQuery = "";
-    }
-
-    function toggleSidebar() {
-        if (!isDesktop) {
-            isSidebarOpen = !isSidebarOpen;
+            window.location.href = `${FORUM_BASE_URL}/${selectedForum.forum_id}/create-thread`;
         }
     }
 
@@ -136,35 +56,7 @@
 <svelte:window bind:innerWidth />
 
 <div class="main-screen">
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <div class="container">
-            <div class="header-row">
-                <div class="title-area">
-                    <h1>Выбор раздела</h1>
-                    <p>Выберите раздел для создания новой темы</p>
-                </div>
-                <button class="back-btn">
-                    <X size={16} />
-                </button>
-            </div>
-
-            <div class="search-box">
-                <div class="search-icon-left">
-                    <Search size={15} />
-                </div>
-                <input
-                    bind:value={searchQuery}
-                    placeholder="Поиск раздела..."
-                />
-                {#if searchQuery}
-                    <button class="clear-btn" on:click={clearSearch}>
-                        <X size={14} />
-                    </button>
-                {/if}
-            </div>
-        </div>
-    </div>
+    <TopBar bind:searchQuery />
 
     <!-- Content -->
     <div class="content-wrapper">
@@ -206,70 +98,12 @@
 
         {#if !loading && !isSearching}
             <div class="split-layout">
-                <div class="sidebar" class:open={isSidebarOpen}>
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <!-- svelte-ignore a11y-no-static-element-interactions -->
-                    <div class="sidebar-header" on:click={toggleSidebar}>
-                        <div class="sidebar-header-title">
-                            <List size={13} color="#2BAD72" />
-                            <span>Категории</span>
-                        </div>
-                        {#if !isDesktop}
-                            <div
-                                class="sidebar-toggle"
-                                style="transform: {isSidebarOpen
-                                    ? 'rotate(180deg)'
-                                    : 'rotate(0deg)'}"
-                            >
-                                <ChevronDown size={14} />
-                            </div>
-                        {/if}
-                    </div>
-                    {#if isSidebarOpen || isDesktop}
-                        <div
-                            class="sidebar-menu"
-                            transition:slide|local={{ duration: 200 }}
-                        >
-                            {#each forums as group (group.forum_id)}
-                                <button
-                                    class="sidebar-item"
-                                    class:active={activeGroup?.forum_id ===
-                                        group.forum_id}
-                                    on:click={() =>
-                                        (activeGroupId = group.forum_id)}
-                                >
-                                    <div
-                                        class="sidebar-icon"
-                                        style={`color: ${CATEGORY_COLOR}`}
-                                    >
-                                        {#if group.forum_title === "Основная категория"}
-                                            <TrendingUp size={14} />
-                                        {:else if group.forum_title === "Тематическая категория"}
-                                            <BookOpenText size={14} />
-                                        {:else if group.forum_title === "Игровая категория"}
-                                            <Gamepad2 size={14} />
-                                        {:else if group.forum_title === "Общая категория"}
-                                            <MessageSquarePlus size={14} />
-                                        {:else if group.forum_title === "Пользовательские разделы"}
-                                            <Users size={14} />
-                                        {:else if group.icon_content}
-                                            <span
-                                                class="NodeSvgIcon"
-                                                style="font-size: 14px; width: 14px; height: 14px;"
-                                                >{@html group.icon_content}</span
-                                            >
-                                        {:else}
-                                            <Hash size={14} />
-                                        {/if}
-                                    </div>
-                                    <span class="sidebar-title"
-                                        >{group.forum_title}</span
-                                    >
-                                </button>
-                            {/each}
-                        </div>
-                    {/if}
-                </div>
+                <Sidebar
+                    {forums}
+                    {isDesktop}
+                    bind:isSidebarOpen
+                    bind:activeGroupId
+                />
 
                 <div class="main-content">
                     {#if activeGroup}
@@ -303,7 +137,12 @@
 
     <!-- Bottom action bar -->
     {#if selectedForum}
-        <div class="bottom-bar" transition:slide|local={{ duration: 300 }}>
+        <div
+            class="bottom-bar"
+            transition:slide|local={{
+                duration: TRANSITIONS.slideLong.duration,
+            }}
+        >
             <div class="bottom-bar-content">
                 <div class="bottom-info">
                     <p class="label">Выбранный раздел:</p>
@@ -349,129 +188,9 @@
 
     .main-screen {
         min-height: 100vh;
-        background: #080808;
+        background: var(--color-bg-page);
         display: flex;
         flex-direction: column;
-    }
-
-    .top-bar {
-        position: sticky;
-        top: 0;
-        z-index: 30;
-        background: rgba(8, 8, 8, 0.95);
-        backdrop-filter: blur(16px);
-        border-bottom: 1px solid #2d2d2d;
-    }
-
-    .container {
-        max-width: 56rem; /* 4xl */
-        margin: 0 auto;
-        padding: 12px 16px;
-    }
-
-    .header-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-    }
-
-    .back-btn {
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border-radius: 12px;
-        border: 1px solid #2d2d2d;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: rgba(255, 255, 255, 0.5);
-        transition: all 0.2s;
-    }
-
-    .back-btn:hover {
-        color: white;
-        border-color: #505050;
-    }
-
-    .title-area {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .title-area h1 {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 16px;
-        margin: 0;
-        font-weight: 500;
-    }
-
-    .title-area p {
-        color: rgba(255, 255, 255, 0.35);
-        font-size: 12px;
-        margin: 0;
-        display: none;
-    }
-
-    @media (min-width: 640px) {
-        .title-area p {
-            display: block;
-        }
-    }
-
-    @keyframes pulse {
-        from {
-            opacity: 0.3;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    .search-box {
-        position: relative;
-    }
-
-    .search-icon-left {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.3);
-        pointer-events: none;
-    }
-
-    .search-box input {
-        width: 100%;
-        background: #272727;
-        border: 1px solid #363636;
-        border-radius: 12px;
-        padding: 10px 36px;
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.9);
-        transition: all 0.2s;
-    }
-
-    .search-box input::placeholder {
-        color: rgba(255, 255, 255, 0.25);
-    }
-
-    .search-box input:focus {
-        outline: none;
-        border-color: rgba(43, 173, 114, 0.5);
-        background: #303030;
-    }
-
-    .clear-btn {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.3);
-    }
-
-    .clear-btn:hover {
-        color: rgba(255, 255, 255, 0.6);
     }
 
     .content-wrapper {
@@ -487,7 +206,7 @@
         align-items: center;
         justify-content: center;
         padding: 64px 0;
-        color: rgba(255, 255, 255, 0.3);
+        color: var(--color-text-description);
         font-size: 14px;
     }
 
@@ -495,8 +214,8 @@
         display: flex;
         flex-direction: column;
         max-height: calc(100vh - 250px);
-        background: #111;
-        border: 1px solid #2d2d2d;
+        background: var(--color-bg-container);
+        border: 1px solid var(--color-border-default);
         border-radius: 12px;
         padding: 16px;
     }
@@ -508,7 +227,7 @@
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
-        scrollbar-color: #2bad72 transparent;
+        scrollbar-color: var(--color-accent-primary) transparent;
         padding-right: 6px;
         margin-right: -6px;
     }
@@ -522,7 +241,7 @@
     }
 
     .results-list::-webkit-scrollbar-thumb {
-        background: #2bad72;
+        background: var(--color-accent-primary);
         border-radius: 10px;
     }
 
@@ -532,26 +251,26 @@
         gap: 8px;
         margin-bottom: 12px;
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.35);
+        color: var(--color-text-subtitle);
         flex-shrink: 0;
     }
 
     .no-results {
         text-align: center;
         padding: 48px 0;
-        color: rgba(255, 255, 255, 0.25);
+        color: var(--color-text-placeholder);
     }
 
     .empty-text {
         font-size: 14px;
         margin: 0 0 4px 0;
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--color-text-sidebar);
     }
 
     .empty-subtext {
         font-size: 12px;
         margin: 0;
-        color: rgba(255, 255, 255, 0.3);
+        color: var(--color-text-description);
     }
 
     .split-layout {
@@ -566,117 +285,11 @@
         }
     }
 
-    .sidebar {
-        width: 100%;
-        background: #111;
-        border: 1px solid #2d2d2d;
-        border-radius: 12px;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-
-    @media (min-width: 768px) {
-        .sidebar {
-            width: 270px;
-            align-self: flex-start;
-            position: static;
-            top: 130px;
-        }
-    }
-
-    .sidebar-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px;
-        border-bottom: 1px solid #2d2d2d;
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.4);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        cursor: pointer;
-        user-select: none;
-    }
-
-    @media (min-width: 768px) {
-        .sidebar-header {
-            cursor: default;
-        }
-    }
-
-    .sidebar-header-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .sidebar-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.2s ease;
-        color: rgba(255, 255, 255, 0.4);
-    }
-
-    .sidebar-menu {
-        display: flex;
-        flex-direction: column;
-        padding: 8px;
-        gap: 4px;
-    }
-
-    .sidebar-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 8px;
-        background: transparent;
-        border: 1px solid transparent;
-        color: rgba(255, 255, 255, 0.7);
-        text-align: left;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-
-    .sidebar-item:hover {
-        background: rgba(255, 255, 255, 0.03);
-        color: white;
-    }
-
-    .sidebar-item.active {
-        background: #272727;
-        border-color: #363636;
-        color: white;
-    }
-
-    .sidebar-icon {
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .sidebar-item.active .sidebar-icon {
-        background: rgba(0, 0, 0, 0.2);
-    }
-
-    .sidebar-title {
-        font-size: 14px;
-        font-weight: 500;
-        white-space: nowrap;
-    }
-
     .main-content {
         flex: 1;
         min-width: 0;
-        background: #111;
-        border: 1px solid #2d2d2d;
+        background: var(--color-bg-container);
+        border: 1px solid var(--color-border-default);
         border-radius: 12px;
         overflow: hidden;
         padding: 16px;
@@ -696,7 +309,7 @@
     .main-header {
         margin-bottom: 20px;
         padding-bottom: 16px;
-        border-bottom: 1px solid #2d2d2d;
+        border-bottom: 1px solid var(--color-border-default);
         flex-shrink: 0;
     }
 
@@ -714,7 +327,7 @@
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
-        scrollbar-color: #2bad72 transparent;
+        scrollbar-color: var(--color-accent-primary) transparent;
         padding-right: 6px;
         margin-right: -6px;
     }
@@ -728,7 +341,7 @@
     }
 
     .forums-list-main::-webkit-scrollbar-thumb {
-        background: #2bad72;
+        background: var(--color-accent-primary);
         border-radius: 10px;
     }
 
@@ -741,9 +354,9 @@
     }
 
     .bottom-bar-content {
-        background: rgba(45, 45, 45, 0.95);
+        background: var(--color-bg-bottom-bar);
         backdrop-filter: blur(16px);
-        border-top: 1px solid #363636;
+        border-top: 1px solid var(--color-border-interactive);
         max-width: 56rem;
         margin: 0 auto;
         padding: 12px 16px;
@@ -759,7 +372,7 @@
 
     .label {
         font-size: 11px;
-        color: rgba(255, 255, 255, 0.3);
+        color: var(--color-text-description);
         margin: 0 0 2px 0;
     }
 
@@ -772,7 +385,7 @@
     .selected-title-sm {
         font-size: 14px;
         font-weight: 500;
-        color: #2bad72;
+        color: var(--color-accent-primary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -785,7 +398,7 @@
         gap: 8px;
         padding: 10px 20px;
         border-radius: 12px;
-        background: #2bad72;
+        background: var(--color-accent-primary);
         color: #000;
         font-size: 14px;
         font-weight: 500;
@@ -793,6 +406,6 @@
     }
 
     .confirm-btn:hover {
-        background: rgba(43, 173, 114, 0.9);
+        background: var(--color-accent-primary-transparent);
     }
 </style>

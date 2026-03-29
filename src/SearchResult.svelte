@@ -83,8 +83,8 @@
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.15s ease;
-        border: 1px solid #505050;
-        background: #272727;
+        border: 1px solid var(--color-border-hover);
+        background: var(--color-bg-item);
         margin-bottom: 6px;
     }
 
@@ -93,14 +93,14 @@
     }
 
     .search-result:not(.selected):hover {
-        background: #303030;
-        border-color: #505050;
+        background: var(--color-bg-hover);
+        border-color: var(--color-border-hover);
         transform: translateX(2px);
     }
 
     .search-result.selected {
-        background: rgba(43, 173, 114, 0.15);
-        border-color: rgba(43, 173, 114, 0.4);
+        background: var(--color-bg-item-selected);
+        border-color: var(--color-border-item-selected);
     }
 
     .radio-box {
@@ -108,7 +108,7 @@
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid var(--color-text-muted);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -116,24 +116,24 @@
     }
 
     .search-result:hover .radio-box {
-        border-color: rgba(255, 255, 255, 0.4);
+        border-color: var(--color-text-header);
     }
 
     .radio-box.selected {
-        border-color: #2bad72;
-        background: #2bad72;
+        border-color: var(--color-accent-primary);
+        background: var(--color-accent-primary);
     }
 
     .radio-box.selected:has(.NodeSvgIcon) {
         background: transparent;
         border-color: transparent;
-        color: #00ba78;
+        color: var(--color-accent-icon-active);
     }
 
     .radio-box:has(.NodeSvgIcon) {
         border-color: transparent !important;
         background: transparent !important;
-        color: #505050;
+        color: var(--color-border-hover);
     }
 
     .info {
@@ -143,23 +143,23 @@
 
     .title {
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--color-text-list-title);
     }
 
     .selected-title {
-        color: #2bad72;
+        color: var(--color-accent-primary);
     }
 
     .parent-label {
         font-size: 11px;
-        color: rgba(255, 255, 255, 0.4);
+        color: var(--color-text-header);
         margin-left: 6px;
         font-weight: normal;
     }
 
     .description {
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.3);
+        color: var(--color-text-description);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -167,8 +167,8 @@
     }
 
     mark {
-        background: rgba(43, 173, 114, 0.3);
-        color: #2bad72;
+        background: var(--color-bg-mark);
+        color: var(--color-accent-primary);
         border-radius: 4px;
         padding: 0 2px;
     }

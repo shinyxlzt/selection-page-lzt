@@ -1,6 +1,7 @@
 <script>
     import { Check, ChevronRight } from "lucide-svelte";
     import { slide } from "svelte/transition";
+    import { CATEGORY_COLOR } from "./lib/constants.js";
 
     /** @type {any} */
     export let forum;
@@ -11,7 +12,7 @@
     /** @type {number} */
     export let depth = 0;
     /** @type {string} */
-    export let accentColor = "#2BAD72";
+    export let accentColor = CATEGORY_COLOR;
     export let expanded = false;
     export let onToggle = (id) => {};
     export let isLastItem = false;
@@ -188,18 +189,18 @@
     }
 
     .forum-item.default:hover {
-        background: #303030;
-        border-color: #505050;
+        background: var(--color-bg-hover);
+        border-color: var(--color-border-hover);
     }
 
     .forum-item.selected {
-        background: rgba(43, 173, 114, 0.15);
-        border-color: rgba(43, 173, 114, 0.4);
+        background: var(--color-bg-item-selected);
+        border-color: var(--color-border-item-selected);
     }
 
     .forum-item.child-selected {
-        background: #2d2d2d;
-        border-color: #505050;
+        background: var(--color-bg-item-child-selected);
+        border-color: var(--color-border-item-child-selected);
     }
 
     /* Линии иерархии */
@@ -245,7 +246,7 @@
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid var(--color-text-muted);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -253,35 +254,35 @@
     }
 
     .forum-item:hover .radio-box {
-        border-color: rgba(255, 255, 255, 0.4);
+        border-color: var(--color-text-header);
     }
 
     .radio-box.selected {
-        border-color: #2bad72;
-        background: #2bad72;
+        border-color: var(--color-accent-primary);
+        background: var(--color-accent-primary);
     }
 
     .radio-box.selected:has(.NodeSvgIcon) {
         background: transparent;
         border-color: transparent;
-        color: #00ba78;
+        color: var(--color-accent-icon-active);
     }
 
     .radio-box:has(.NodeSvgIcon) {
         border-color: transparent !important;
         background: transparent !important;
-        color: #505050;
+        color: var(--color-border-hover);
     }
 
     .radio-box.child-selected {
-        border-color: rgba(43, 173, 114, 0.5);
+        border-color: var(--color-accent-primary-transparent);
     }
 
     .dot {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: rgba(43, 173, 114, 0.5);
+        background: var(--color-accent-primary-transparent);
     }
 
     .info {
@@ -297,7 +298,7 @@
 
     .title {
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--color-text-list-title);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -309,7 +310,7 @@
     }
 
     .selected-title {
-        color: #2bad72 !important;
+        color: var(--color-accent-primary) !important;
     }
 
     .new-badge {
@@ -317,9 +318,9 @@
         font-size: 9px;
         padding: 2px 6px;
         border-radius: 10px;
-        background: rgba(43, 173, 114, 0.2);
-        color: #2bad72;
-        border: 1px solid rgba(43, 173, 114, 0.3);
+        background: var(--color-bg-badge);
+        color: var(--color-accent-primary);
+        border: 1px solid var(--color-border-badge);
         display: none;
     }
 
@@ -331,7 +332,7 @@
 
     .description {
         font-size: 11px;
-        color: rgba(255, 255, 255, 0.3);
+        color: var(--color-text-description);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -340,7 +341,7 @@
 
     .expand-icon {
         flex-shrink: 0;
-        color: rgba(255, 255, 255, 0.25);
+        color: var(--color-text-placeholder);
         margin-left: 4px;
         transition: transform 0.2s;
     }
